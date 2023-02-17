@@ -15,7 +15,7 @@ options(repr.plot.width = 2, repr.plot.height = 4)
 EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
   
   paleta = scales::hue_pal()(100)
-  plots = list()
+  plots_univar = list()
   
   for (i in 1:ncol(df)) {
     nombre = names(df)[i]
@@ -48,7 +48,8 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       
       plot = plot_grid(title, medio, nrow = 3, rel_heights = c(0.1, 1))
       if (print) {print(plot)}
-      plots = list.append(plots, plot)
+      plots_univar = list.append(plots_univar, plot)
+      names(plots_univar)[i] = paste0(names(df)[i])
 
     } else if(is.factor(df[[i]]) | is.logical(df[[i]])){
       
@@ -106,7 +107,8 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       # Mostrar gráfico
       plot = plot_grid(title, linea_media, legend, nrow = 4, rel_heights = c(0.1,1,0.1))
       if (print) {print(plot)}
-      plots = list.append(plots, plot)
+      plots_univar = list.append(plots_univar, plot)
+      names(plots_univar)[i] = paste0(names(df)[i])
     }
   }
     
@@ -115,6 +117,7 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
   # Análisis multivariado numérico
   
   if (target != "none") {
+    plots_multivar = list()
     nombre = target
     numerico = df %>%
       rename("target" = target) %>%
@@ -123,15 +126,16 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
     count = 1
     for(m_num in numerico[,1:ncol(numerico)-1]){
       plot = numerico %>%
-        ggplot(aes(x = m_num, y = as.factor(target), fill = as.factor(target))) +
+        ggplot(aes(y = m_num, x = as.factor(target), fill = as.factor(target))) +
         geom_violin(alpha = 0.5) +
         geom_boxplot(width = 0.1) +
         theme_light() +
-        labs(title = paste("Distribución de", names(numerico)[count]),
-             x = names(numerico)[count], y = "", fill = nombre) +
+        labs(title = paste("Distribución de", names(numerico)[count], "por", target),
+             y = names(numerico)[count], x = nombre, fill = nombre) +
         guides(color = "none", fill = "none")
       if (print) {print(plot)}
-      plots = list.append(plots, plot)
+      plots_multivar = list.append(plots_multivar, plot)
+      names(plots_multivar)[count] = paste0(names(numerico)[count])
       count = count + 1
     }
 
@@ -163,15 +167,17 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
                              label = ifelse(relativa >= 0.05, scales::percent(relativa), ""))) +
               geom_bar(position = "stack", stat = "identity") +
               labs(x = nombre,
-                   title = paste("Frecuencias relativas de", names(categorico)[j]),
+                   title = paste("Frecuencias relativas de", names(categorico)[j],"por", target),
                    fill = names(categorico)[j]) +
               geom_text(aes(y = pos.relativa), size = 5, angle = 0) +
               theme_light() +
               theme(legend.position = "bottom")
       if (print) {print(plot)}
-      plots = list.append(plots, plot)
+      plots_multivar = list.append(plots_multivar, plot)
+      names(plots_multivar)[count + j -1] = paste0(names(categorico)[j])
       }
     }
   }
+  plots = list("Univar" = plots_univar, "Multivar" = plots_multivar)
   return(plots)  
   }
