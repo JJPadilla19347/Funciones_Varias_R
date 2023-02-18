@@ -123,20 +123,19 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       rename("target" = target) %>%
       select(where(is.numeric), target)
     
-    count = 1
-    for(m_num in numerico[,1:ncol(numerico)-1]){
-      plot = numerico %>%
-        ggplot(aes(y = m_num, x = as.factor(target), fill = as.factor(target))) +
+    for(m_num in 1:(ncol(numerico)-1)){
+      plot = ggplot(numerico, aes(y = numerico[, m_num], x = as.factor(target), fill = as.factor(target))) +
         geom_violin(alpha = 0.5) +
         geom_boxplot(width = 0.1) +
         theme_light() +
-        labs(title = paste("Distribución de", names(numerico)[count], "por", target),
-             y = names(numerico)[count], x = nombre, fill = nombre) +
+        labs(title = paste("Distribución de", names(numerico)[m_num], "por", target),
+             y = names(numerico)[m_num], x = nombre, fill = nombre) +
         guides(color = "none", fill = "none")
+      plot = plot_grid(plot)
       if (print) {print(plot)}
       plots_multivar = list.append(plots_multivar, plot)
-      names(plots_multivar)[count] = paste0(names(numerico)[count])
-      count = count + 1
+      names(plots_multivar)[m_num] = paste0(names(numerico)[m_num])
+      print(count)
     }
 
     categorico = df %>%
@@ -148,22 +147,22 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       for(j in 1:(ncol(categorico)-1)){
         temp = categorico %>%
           mutate(factor = categorico[[j]]) %>%
-          group_by(target) %>%
+          group_by(factor) %>%
           mutate(freq_target = n()) %>%
           group_by(factor, target) %>%
           summarise(freq = n(),
                     relativa = freq/freq_target) %>%
           ungroup() %>%
-          group_by(target) %>%
+          group_by(factor) %>%
           unique() %>%
-          arrange(desc(factor)) %>%
+          arrange(desc(target)) %>%
           mutate(pos.relativa = cumsum(relativa) - 0.5 * relativa,
                  pos.absoluta = freq * 0.5)
         almacen = list.append(almacen, temp)
 
       #Gráfico de análisis multivariado de variables categóricas
-      plot = ggplot(as.data.frame(almacen[j]), aes(x = target, y = relativa,
-                             fill = as.factor(factor),
+      plot = ggplot(as.data.frame(almacen[j]), aes(x = as.factor(factor), y = relativa,
+                             fill = target,
                              label = ifelse(relativa >= 0.05, scales::percent(relativa), ""))) +
               geom_bar(position = "stack", stat = "identity") +
               labs(x = nombre,
@@ -172,12 +171,16 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
               geom_text(aes(y = pos.relativa), size = 5, angle = 0) +
               theme_light() +
               theme(legend.position = "bottom")
-      if (print) {print(plot)}
+      
       plots_multivar = list.append(plots_multivar, plot)
-      names(plots_multivar)[count + j -1] = paste0(names(categorico)[j])
+      names(plots_multivar)[m_num + j] = paste0(names(categorico)[j])
+      if (print) {print(plot)}
       }
     }
   }
-  plots = list("Univar" = plots_univar, "Multivar" = plots_multivar)
+  if(target == "none"){
+    plots = plots_univar
+  } else  plots = list("Univar" = plots_univar, "Multivar" = plots_multivar)
+ 
   return(plots)  
   }
