@@ -11,7 +11,6 @@ library(rlist)
 options(repr.plot.width = 2, repr.plot.height = 4)
 
 
-
 EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
   
   paleta = scales::hue_pal()(100)
@@ -30,7 +29,7 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
         theme(plot.margin = margin(0, 0, 0, 7))
       
       # Histograma + densidad
-      hist = ggplot(df, aes(x = df[, i])) + 
+      hist = ggplot(df, aes(x = df[[i]])) + 
         geom_density(fill = paleta[i], alpha = 0.5) +
         geom_histogram(aes(y = stat(density)), fill = paleta[i], color = "black", bins = 30) + 
         labs(x = names(df)[i], title = "") +
@@ -38,7 +37,7 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       
       
       # Violín + boxplot
-      vio = ggplot(df, aes(x = df[, i])) + 
+      vio = ggplot(df, aes(x = df[[i]])) + 
         geom_violin(fill = paleta[i], aes(y = 1), alpha = 0.5) +
         geom_boxplot(fill = paleta[i], aes(y = 1), width = 0.1) +
         labs(x = names(df)[i], title = "") +
@@ -124,7 +123,7 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       select(where(is.numeric), target)
     
     for(m_num in 1:(ncol(numerico)-1)){
-      plot = ggplot(numerico, aes(y = numerico[, m_num], x = as.factor(target), fill = as.factor(target))) +
+      plot = ggplot(numerico, aes(y = numerico[[m_num]], x = as.factor(target), fill = as.factor(target))) +
         geom_violin(alpha = 0.5) +
         geom_boxplot(width = 0.1) +
         theme_light() +
@@ -135,7 +134,6 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
       if (print) {print(plot)}
       plots_multivar = list.append(plots_multivar, plot)
       names(plots_multivar)[m_num] = paste0(names(numerico)[m_num])
-      print(count)
     }
 
     categorico = df %>%
@@ -165,9 +163,9 @@ EDA = function(df, target = "none", print = TRUE, num_lvls = 10){
                              fill = target,
                              label = ifelse(relativa >= 0.05, scales::percent(relativa), ""))) +
               geom_bar(position = "stack", stat = "identity") +
-              labs(x = nombre,
-                   title = paste("Frecuencias relativas de", names(categorico)[j],"por", target),
-                   fill = names(categorico)[j]) +
+              labs(x = names(categorico)[j],
+                   title = paste("Frecuencias relativas de", target,"por", names(categorico)[j]),
+                   fill = target) +
               geom_text(aes(y = pos.relativa), size = 5, angle = 0) +
               theme_light() +
               theme(legend.position = "bottom")
